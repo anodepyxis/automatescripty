@@ -28,7 +28,22 @@ Also please do comment and help me out of there is some problem with the scripts
 
 
 
-REQUIREMENTS!!!!
---> Fedora: ufw, lynis, rkhunter, journalctl, (flatpak, snapd, python3, python3-pip, nodejs, npm)
---> Arch: 
---> Debian: 
+  Requirements For Each Distro: 
+[closed () brackets are the ones that you guys have, if you dont then when running the script make sure to just ommit the ones you dont have]
+
+    Fedora: lynis, dnf-plugins-core, libnotify (python3, python3-pip, nodejs, flatpak, snapd)
+
+    Debian: ufw, lynis, (python3, python3-pip, nodejs, flatpak, snapd)
+
+    Arch: lynis, (python3, python3-pip, nodejs, flatpak, snapd)
+
+
+
+How to Execute this script! 
+  
+    Fedora: Get the script in the home directory, open terminal there and give it POWER to run [ chmod +x ./automatefedora.sh ]
+
+    Debian: Get the script in the home directory, open terminal there and give it POWER to run [ chmod +x ./automatedebian.sh ]
+
+    Arch: Get the script in the home directory, open terminal there and give it POWER to run [ chmod +x ./automatearch.sh ]
+
