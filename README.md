@@ -33,11 +33,11 @@ ALSO when you start this script in terminal, it will ask you to type in your pas
   Requirements For Each Distro: 
 [closed () brackets are the ones that you guys have, if you dont then when running the script make sure to just ommit the ones you dont have]
 
-    Fedora: lynis, dnf-plugins-core, libnotify (python3, python3-pip, nodejs, flatpak, snapd)
+    Fedora: lynis, dnf-plugins-core, libnotify, rkhunter (python3, python3-pip, nodejs, flatpak, snapd)
 
-    Debian: ufw, lynis, (python3, python3-pip, nodejs, flatpak, snapd)
+    Debian: ufw, lynis, rkhunter (python3, python3-pip, nodejs, flatpak, snapd)
 
-    Arch: lynis, (python3, python3-pip, nodejs, flatpak, snapd, yay [if installed])
+    Arch: lynis, rkhunter (python3, python3-pip, nodejs, flatpak, snapd, yay [if installed])
 
 
 
