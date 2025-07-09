@@ -10,42 +10,59 @@ On the basis of these distributions (if you tend to use any subdistros of these,
 
 Also please do comment and help me out of there is some problem with the scripts that I provide. I would love honest and clear feedback for this work. 
 
+IT is in script since I don't want you know your operating system to have more bloat. 
 
 ALSO when you start this script in terminal, it will ask you to type in your password so yeah pay attention to that before the time OUT comes into play!
 
 
-📦 Some Features Of My Scripts 
+🚀 Features Of This Script:
 
-    Updates & upgrades your system packages
+    Updates & upgrades system packages
 
-    Updates Flatpak & Snap packages
+    Updates Flatpak, Snap applications
 
-    Updates Python (pip) and NodeJS packages
+    Updates Python (pip) and NodeJS global packages
 
-    Checks for security vulnerabilities
+    Performs system security audits (Lynis)
 
-    Scans for potential data leaks
+    Scans for rootkits (Rkhunter)
 
-    Gives you a quick overview of your system health
+    Scans for potential data leaks and zombie processes
 
+    Provides a clean system overview: disk usage, RAM, open ports, largest files, firewall status, etc.
+
+    Generates detailed log reports in ~/Report/
+
+    Auto-cleans logs older than 10 days
 
 
   Requirements For Each Distro: 
-[closed () brackets are the ones that you guys have, if you dont then when running the script make sure to just ommit the ones you dont have]
+(Tools in brackets [ ] are optional — if you don’t have them installed, the script will just skip that part.)
 
-    Fedora: lynis, dnf-plugins-core, libnotify, rkhunter (python3, python3-pip, nodejs, flatpak, snapd)
+     Fedora: dnf-plugins-core, libnotify, lynis, rkhunter, [python3], [python3-pip], [nodejs], [flatpak], [snapd]
 
-    Debian: ufw, lynis, rkhunter (python3, python3-pip, nodejs, flatpak, snapd)
-
-    Arch: lynis, rkhunter (python3, python3-pip, nodejs, flatpak, snapd, yay [if installed])
-
-
-
-How to Execute this script! 
+     Debian: ufw, lynis, rkhunter, [python3], [python3-pip], [nodejs], [flatpak], [snapd]
+     
+     Arch: lynis, rkhunter, [yay], [python3], [python3-pip], [nodejs], [flatpak], [snapd]
   
-    Fedora: Get the script in the home directory, open terminal there and give it POWER to run [ chmod +x ./automatefedora.sh ]
+  
+  How to Execute this script! 
+(Move the file in the home directory, since it will be easy to navigate) 
 
-    Debian: Get the script in the home directory, open terminal there and give it POWER to run [ chmod +x ./automatedebian.sh ]
 
-    Arch: Get the script in the home directory, open terminal there and give it POWER to run [ chmod +x ./automatearch.sh ]
+ Give Permission To Execute!
+ 
+    chmod +x ./automatefedora.sh   # for Fedora
+    chmod +x ./automatedebian.sh   # for Debian
+    chmod +x ./automatearch.sh     # for Arch
 
+NOW EXECUTE IN TERMINAL BY PUTTING THIS!
+
+     ./automatefedora.sh
+
+
+
+ 🔒 Disclaimer
+   
+    I’m not responsible if you accidentally yeet your system because you ran this without reading the code.
+    Always audit scripts before executing them.
