@@ -184,8 +184,8 @@ fi
 ENDTIME=$(date +%s)
 RUNTIME=$((ENDTIME - STARTTIME))
 
-notify "System maintenance complete in ${RUNTIME}s 🎉"
+notify "Fedora Automate Script has completed its work in ${RUNTIME}s 🎉"
 echo -e "\n${GREEN}======================================"
-echo "  All done in $RUNTIME seconds!"
+echo "  All done in $RUNTIME seconds! You may check the log files for future reviews"
 echo "  Report saved to $LOGFILE"
 echo -e "======================================${NC}\n"
