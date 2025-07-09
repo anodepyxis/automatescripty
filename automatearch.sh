@@ -180,8 +180,8 @@ fi
 ENDTIME=$(date +%s)
 RUNTIME=$((ENDTIME - STARTTIME))
 
-notify "Arch maintenance complete in ${RUNTIME}s 🎉"
+notify "Arch Automate Script completed its work in ${RUNTIME}s 🎉"
 echo -e "\n${GREEN}======================================"
-echo "  All done in $RUNTIME seconds!"
+echo "  All done in $RUNTIME seconds! You may check the log file for review later"
 echo "  Report saved to $LOGFILE"
 echo -e "======================================${NC}\n"
