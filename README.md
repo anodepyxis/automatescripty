@@ -11,6 +11,8 @@ On the basis of these distributions (if you tend to use any subdistros of these,
 Also please do comment and help me out of there is some problem with the scripts that I provide. I would love honest and clear feedback for this work. 
 
 
+ALSO when you start this script in terminal, it will ask you to type in your password so yeah pay attention to that before the time OUT comes into play!
+
 
 📦 Some Features Of My Scripts 
 
