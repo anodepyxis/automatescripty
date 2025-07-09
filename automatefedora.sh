@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Fedora
-# By AnodePyxis
+# Fedora Automate Script
+# By Anode Pyxis
 
 # Colors for terminal output
 GREEN='\033[0;32m'
@@ -23,11 +23,11 @@ LOGFILE="$REPORT_DIR/system-maintenance-$(date +%F-%H-%M-%S).log"
 exec > >(tee -a "$LOGFILE") 2>&1
 
 notify() {
-    notify-send "Fedora Care Pro" "$1"
+    notify-send "Fedora Automate Script" "$1"
 }
 
 echo -e "${CYAN}======================================"
-echo "Fedora System Maintenance"
+echo "Fedora Automate Script"
 echo -e "        Log: $LOGFILE"
 echo -e "======================================${NC}"
 echo
@@ -181,7 +181,7 @@ RUNTIME=$((ENDTIME - STARTTIME))
 
 notify "System maintenance complete in ${RUNTIME}s"
 echo -e "\n${GREEN}======================================"
-echo "  All done in $RUNTIME"
+echo "  All done in $RUNTIME seconds!"
 echo "  Report saved to $LOGFILE"
 echo -e "======================================${NC}\n"
 
