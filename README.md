@@ -35,7 +35,7 @@ Also please do comment and help me out of there is some problem with the scripts
 
     Debian: ufw, lynis, (python3, python3-pip, nodejs, flatpak, snapd)
 
-    Arch: lynis, (python3, python3-pip, nodejs, flatpak, snapd)
+    Arch: lynis, (python3, python3-pip, nodejs, flatpak, snapd, yay [if installed])
 
 
 
