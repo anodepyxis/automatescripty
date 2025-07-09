@@ -9,3 +9,26 @@ These Linux distributions include: Arch, Debian, Fedora. (The big 3 lol) Hence 3
 On the basis of these distributions (if you tend to use any subdistros of these, you can run the program that I provide)
 
 Also please do comment and help me out of there is some problem with the scripts that I provide. I would love honest and clear feedback for this work. 
+
+
+
+📦 Some Features Of My Scripts 
+
+    Updates & upgrades your system packages
+
+    Updates Flatpak & Snap packages
+
+    Updates Python (pip) and NodeJS packages
+
+    Checks for security vulnerabilities
+
+    Scans for potential data leaks
+
+    Gives you a quick overview of your system health
+
+
+
+REQUIREMENTS!!!!
+--> Fedora: ufw, lynis, rkhunter, journalctl, (flatpak, snapd, python3, python3-pip, nodejs, npm)
+--> Arch: 
+--> Debian: 
