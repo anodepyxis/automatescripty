@@ -1,6 +1,10 @@
 #!/bin/bash
 
-# Debian Automate Script by Anode Pyxis
+# Debian Automate Scripty
+# Author: Anode Pyxis
+
+# Strict Mode
+set -euo pipefail
 
 # Colors
 GREEN='\033[0;32m'
@@ -9,169 +13,170 @@ RED='\033[0;31m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
+# Paths & Variables
 STARTTIME=$(date +%s)
-
-# Report directory & log file setup
-REPORT_DIR=~/Report
-mkdir -p "$REPORT_DIR"
-find "$REPORT_DIR" -type f -mtime +10 -delete
+REPORT_DIR="$HOME/Report"
 LOGFILE="$REPORT_DIR/debian-maintenance-$(date +%F-%H-%M-%S).log"
+PKG_LIST="$HOME/installed_packages.txt"
+DRY_RUN=false
+
+# Setup directory
+mkdir -p "$REPORT_DIR"
+
+# Logging (Thread-safe redirection)
 exec > >(tee -a "$LOGFILE") 2>&1
 
 notify() {
-    notify-send "Debian Automate" "$1"
+    # Check if we are in a graphical session and notify-send exists
+    if [[ -n "${DISPLAY:-}" ]] && command -v notify-send &> /dev/null; then
+        notify-send "Debian Automate" "$1"
+    else
+        echo -e "${CYAN}[Notification]${NC} $1"
+    fi
 }
-
-echo -e "${CYAN}======================================"
-echo "     Debian Automate Script by Anode Pyxis"
-echo -e "        Log: $LOGFILE"
-echo -e "======================================${NC}\n"
 
 section() {
     echo -e "\n${YELLOW}>>> $1...${NC}\n"
-    notify "$1"
 }
 
-# Current kernel
-CURRENT_KERNEL=$(uname -r)
+# --- Core Modules ---
 
-# System updates
-section "Updating APT packages"
-sudo apt update && sudo apt full-upgrade -y
+update_package_manifest() {
+    section "Updating Package Manifest"
+    echo "# Debian Package List (Manual) - Generated $(date)" > "$PKG_LIST"
+    apt-mark showmanual >> "$PKG_LIST"
+    echo -e "${GREEN}Manifest updated: $PKG_LIST${NC}"
+}
 
-# Firmware updates
-section "Installing firmware updates"
-if command -v fwupdmgr &>/dev/null; then
-    sudo fwupdmgr refresh
-    sudo fwupdmgr get-updates
-    sudo fwupdmgr update
-else
-    echo -e "${YELLOW}fwupdmgr not installed. Skipping firmware updates.${NC}"
+update_system() {
+    section "System Updates (APT)"
+    sudo apt update
+    if [ "$DRY_RUN" = true ]; then
+        sudo apt full-upgrade --simulate
+    else
+        sudo apt full-upgrade -y
+    fi
+
+    # Flatpak
+    if command -v flatpak &> /dev/null; then
+        section "Updating Flatpaks"
+        if [ "$DRY_RUN" = true ]; then
+            echo "[Dry-Run] Would run: flatpak update"
+        else
+            flatpak update -y
+        fi
+    fi
+
+    # Firmware (fwupd) - Balanced Logic
+    if command -v fwupdmgr &> /dev/null; then
+        section "Checking Firmware"
+        if [ "$DRY_RUN" = true ]; then
+             echo "[Dry-Run] Would refresh and check for firmware updates."
+        else
+            sudo fwupdmgr refresh --force || true
+            sudo fwupdmgr update || true
+        fi
+    fi
+}
+
+clean_up() {
+    section "System Cleanup"
+    if [ "$DRY_RUN" = true ]; then
+        echo "[Dry-Run] Would run autoremove, clean cache, and clear logs."
+        sudo apt autoremove --simulate
+    else
+        sudo apt autoremove -y
+        sudo apt autoclean
+        sudo journalctl --vacuum-time=2weeks
+        rm -rf ~/.local/share/Trash/files/* 2>/dev/null || true
+        rm -rf ~/.cache/thumbnails/* 2>/dev/null || true
+    fi
+}
+
+security_audit() {
+    section "Security Audit"
+    if command -v ufw &> /dev/null; then
+        sudo ufw status verbose
+    else
+        echo "UFW not found. Checking active listening ports..."
+        sudo ss -tulnp
+    fi
+    
+    if command -v lynis &> /dev/null; then
+        sudo lynis audit system --quick
+    fi
+}
+
+check_reboot() {
+    section "Post-Maintenance Check"
+    if [ -f /var/run/reboot-required ]; then
+        echo -e "${RED}!! SYSTEM REBOOT REQUIRED !!${NC}"
+        cat /var/run/reboot-required
+        notify "System reboot required to apply updates."
+    else
+        echo -e "${GREEN}No reboot required.${NC}"
+    fi
+}
+
+# --- Interface ---
+
+show_menu() {
+    clear
+    echo -e "${CYAN}======================================"
+    echo "    Debian Automate Pro (Hardened)"
+    echo -e "======================================${NC}"
+    echo "1) Full Maintenance (Manifest + Update + Clean + Audit)"
+    echo "2) Dry Run (Simulate Updates & Cleanup)"
+    echo "3) Security Audit Only"
+    echo "4) Cleanup Only"
+    echo "5) Exit"
+    echo -n "Selection: "
+}
+
+# --- Main Logic ---
+
+show_menu
+# Prevent script exit on empty input with a default or error check
+read -r OPT || exit 0
+
+# Conditional Sudo: Don't prime if exiting or just doing a simulated dry-run 
+# (Note: apt --simulate still requires sudo to access system caches in some cases)
+if [[ "$OPT" =~ ^[134]$ ]]; then
+    sudo -v
 fi
 
-# Flatpak updates
-if command -v flatpak &> /dev/null; then
-    section "Updating Flatpaks"
-    flatpak update -y
-    section "Removing unused Flatpak runtimes"
-    flatpak uninstall --unused -y
-fi
+case $OPT in
+    1)
+        update_package_manifest
+        update_system
+        clean_up
+        security_audit
+        ;;
+    2)
+        DRY_RUN=true
+        section "SIMULATING MAINTENANCE"
+        update_system
+        clean_up
+        ;;
+    3)
+        security_audit
+        ;;
+    4)
+        clean_up
+        ;;
+    5)
+        echo "Exiting..."
+        exit 0
+        ;;
+    *)
+        echo "Invalid input."
+        exit 1
+        ;;
+esac
 
-# Snap updates
-if command -v snap &> /dev/null; then
-    section "Updating Snaps"
-    sudo snap refresh
-fi
+check_reboot
 
-# Pip updates
-if command -v pip3 &> /dev/null; then
-    section "Updating pip3 packages"
-    pip3 list --outdated --format=freeze | cut -d = -f1 | xargs -n1 pip3 install --user --upgrade
-fi
-
-# NPM global updates
-if command -v npm &> /dev/null; then
-    section "Updating npm global packages"
-    sudo npm install -g npm
-    npm update -g
-fi
-
-# Orphaned package cleanup
-section "Removing unnecessary packages"
-sudo apt autoremove -y
-sudo apt clean
-
-# Journal cleanup
-section "Cleaning journal logs"
-sudo journalctl --vacuum-time=2weeks
-
-# Trash and thumbnails
-section "Emptying user trash and thumbnails"
-rm -rf ~/.local/share/Trash/files/*
-rm -rf ~/.local/share/Trash/info/*
-rm -rf ~/.cache/thumbnails/*
-
-# Largest files
-section "Finding largest files (Top 10)"
-sudo find / -type f -printf '%s %p\n' 2>/dev/null | sort -nr | head -10 | awk '{print $1/1024/1024 " MB - " $2}'
-
-# Zombie processes
-section "Scanning for zombie processes"
-ZOMBIES=$(ps -aux | grep defunct | grep -v grep)
-if [ -z "$ZOMBIES" ]; then
-    echo -e "${GREEN}No zombie processes found.${NC}"
-else
-    echo -e "${RED}Zombie processes detected:${NC}"
-    echo "$ZOMBIES"
-fi
-
-# Firewall
-section "Checking firewall status"
-sudo ufw status verbose || echo -e "${YELLOW}UFW may not be installed or enabled.${NC}"
-
-# Open ports
-section "Listing open ports"
-sudo ss -tulnp
-
-# Disk usage
-section "Checking disk usage"
-df -h
-
-# RAM usage
-section "Checking memory usage"
-free -h
-
-# CPU info
-section "CPU info"
-lscpu
-
-# Installed kernel
-section "Installed kernel(s)"
-dpkg --list | grep linux-image
-
-# Config backups
-section "Backing up critical configs"
-BACKUP_DIR=~/SystemBackups
-mkdir -p $BACKUP_DIR
-cp /etc/fstab "$BACKUP_DIR/fstab.backup.$(date +%F)"
-cp /etc/hosts "$BACKUP_DIR/hosts.backup.$(date +%F)"
-echo -e "${GREEN}Configs backed up to $BACKUP_DIR${NC}"
-
-# Ping test
-section "Testing internet connectivity"
-ping -c 3 8.8.8.8
-
-# Lynis Audit
-section "Running security audit with Lynis"
-if command -v lynis &> /dev/null; then
-    sudo lynis audit system --quiet | tee -a "$LOGFILE"
-else
-    echo -e "${YELLOW}Lynis not installed. Skipping audit.${NC}"
-fi
-
-# Rkhunter scan
-section "Scanning for rootkits with Rkhunter"
-if command -v rkhunter &> /dev/null; then
-    sudo rkhunter --update
-    sudo rkhunter --check --sk | tee -a "$LOGFILE"
-else
-    echo -e "${YELLOW}Rkhunter not installed. Skipping rootkit scan.${NC}"
-fi
-
-# Kernel change detection
-NEW_KERNEL=$(uname -r)
-if [[ "$CURRENT_KERNEL" != "$NEW_KERNEL" ]]; then
-    echo -e "${YELLOW}Kernel change detected: $NEW_KERNEL${NC}"
-    notify "New kernel installed. Reboot recommended."
-    echo -e "${RED}Please reboot your system to apply kernel updates.${NC}"
-fi
-
-# Final runtime
 ENDTIME=$(date +%s)
 RUNTIME=$((ENDTIME - STARTTIME))
-
-notify "Debian Automate Script completed its work in ${RUNTIME}s 🎉"
-echo -e "\n${GREEN}======================================"
-echo "  All done in $RUNTIME seconds! You may check the log file for review later on"
-echo "  Report saved to $LOGFILE"
-echo -e "======================================${NC}\n"
+echo -e "\n${GREEN}Success! Finished in ${RUNTIME}s.${NC}"
+echo "Log: $LOGFILE"
