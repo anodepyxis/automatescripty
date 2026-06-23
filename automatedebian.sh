@@ -2,6 +2,7 @@
 
 # Debian Automate Scripty
 # Author: Anode Pyxis
+# Version: 1.0 (Last Update Date: 23rd June 2026)
 
 # Strict Mode
 set -euo pipefail
@@ -23,11 +24,19 @@ DRY_RUN=false
 # Setup directory
 mkdir -p "$REPORT_DIR"
 
-# Logging (Thread-safe redirection)
+# Logging (Thread-safe redirection via process substitution)
 exec > >(tee -a "$LOGFILE") 2>&1
 
+# Global Exit Trap Handler
+cleanup_on_exit() {
+    local exit_code=$?
+    if [ $exit_code -ne 0 ]; then
+        echo -e "\n${RED}!! Script terminated unexpectedly with exit code $exit_code !!${NC}"
+    fi
+}
+trap cleanup_on_exit EXIT
+
 notify() {
-    # Check if we are in a graphical session and notify-send exists
     if [[ -n "${DISPLAY:-}" ]] && command -v notify-send &> /dev/null; then
         notify-send "Debian Automate" "$1"
     else
@@ -50,7 +59,12 @@ update_package_manifest() {
 
 update_system() {
     section "System Updates (APT)"
-    sudo apt update
+    
+    # Prevent network/mirror failure from crashing the script under set -e
+    if ! sudo apt update; then
+        echo -e "${RED}Warning: 'apt update' failed or was interrupted. Proceeding with existing cache state.${NC}"
+    fi
+
     if [ "$DRY_RUN" = true ]; then
         sudo apt full-upgrade --simulate
     else
@@ -67,7 +81,7 @@ update_system() {
         fi
     fi
 
-    # Firmware (fwupd) - Balanced Logic
+    # Firmware (fwupd)
     if command -v fwupdmgr &> /dev/null; then
         section "Checking Firmware"
         if [ "$DRY_RUN" = true ]; then
@@ -85,11 +99,19 @@ clean_up() {
         echo "[Dry-Run] Would run autoremove, clean cache, and clear logs."
         sudo apt autoremove --simulate
     else
+        echo "Removing obsolete packages..."
         sudo apt autoremove -y
+        
+        echo "Cleaning package cache archives..."
         sudo apt autoclean
+        
+        echo "Vacuuming systemd journal..."
         sudo journalctl --vacuum-time=2weeks
-        rm -rf ~/.local/share/Trash/files/* 2>/dev/null || true
-        rm -rf ~/.cache/thumbnails/* 2>/dev/null || true
+        
+        echo "Clearing user trash and thumbnail caches..."
+        rm -rf "$HOME/.local/share/Trash/files/"* 2>/dev/null || true
+        rm -rf "$HOME/.cache/thumbnails/"* 2>/dev/null || true
+        echo -e "${GREEN}Cleanup complete.${NC}"
     fi
 }
 
@@ -136,12 +158,10 @@ show_menu() {
 # --- Main Logic ---
 
 show_menu
-# Prevent script exit on empty input with a default or error check
 read -r OPT || exit 0
 
-# Conditional Sudo: Don't prime if exiting or just doing a simulated dry-run 
-# (Note: apt --simulate still requires sudo to access system caches in some cases)
-if [[ "$OPT" =~ ^[134]$ ]]; then
+# Dry-runs still require root access to read package files/locks securely
+if [[ "$OPT" =~ ^[1234]$ ]]; then
     sudo -v
 fi
 
@@ -174,7 +194,10 @@ case $OPT in
         ;;
 esac
 
-check_reboot
+# Only verify reboot indicators if real changes were executed
+if [ "$DRY_RUN" = false ] && { [ "$OPT" -eq 1 ] || [ "$OPT" -eq 4 ]; }; then
+    check_reboot
+fi
 
 ENDTIME=$(date +%s)
 RUNTIME=$((ENDTIME - STARTTIME))
